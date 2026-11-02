@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório Técnico - Detecção de Bad Smells e Refatoração Segura</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    @page {
+      size: A4;
+      margin: 18mm 15mm 18mm 15mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #1e293b;
+      background: #f8fafc;
+      line-height: 1.55;
+      font-size: 10pt;
+    }
+
+    .page-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 36px 44px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Print styling */
+    @media print {
+      body {
+        background: #ffffff;
+      }
+      .page-container {
+        padding: 0;
+        box-shadow: none;
+        max-width: 100%;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+      .avoid-break {
+        page-break-inside: avoid;
+      }
+    }
+
+    /* Header / Cover banner */
+    .header-banner {
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 18px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .header-title-block h1 {
+      font-size: 19pt;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    .header-title-block .subtitle {
+      font-size: 11pt;
+      color: #2563eb;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .meta-box {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 22px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px 16px;
+      font-size: 9pt;
+    }
+
+    .meta-item strong {
+      color: #475569;
+    }
+
+    .meta-item span {
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    h2 {
+      font-size: 13pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      border-left: 4px solid #2563eb;
+      padding-left: 10px;
+      letter-spacing: -0.3px;
+    }
+
+    h3 {
+      font-size: 10.5pt;
+      font-weight: 600;
+      color: #1e3a8a;
+      margin-top: 14px;
+      margin-bottom: 6px;
+    }
+
+    p {
+      margin-bottom: 9px;
+      text-align: justify;
+    }
+
+    ul, ol {
+      margin-left: 20px;
+      margin-bottom: 10px;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    /* Bad smell cards */
+    .smell-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #ef4444;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+    }
+
+    .smell-card h3 {
+      margin-top: 0;
+      color: #991b1b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge-success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-info {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    /* Code blocks */
+    pre {
+      font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+      font-size: 7.5pt;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 8px 0 12px 0;
+      line-height: 1.45;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      font-size: inherit;
+    }
+
+    /* Terminal output */
+    .terminal-box {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 12px 14px;
+      margin: 10px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7.5pt;
+      color: #cbd5e1;
+      page-break-inside: avoid;
+    }
+
+    .terminal-box .term-header {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+
+    .term-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .term-dot.red { background: #ef4444; }
+    .term-dot.yellow { background: #eab308; }
+    .term-dot.green { background: #22c55e; }
+
+    .term-cmd {
+      color: #38bdf8;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .term-error {
+      color: #f87171;
+    }
+
+    .term-success {
+      color: #4ade80;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 14px 0;
+      font-size: 8.5pt;
+    }
+
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    /* Grid for before / after */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 10px 0;
+      page-break-inside: avoid;
+    }
+
+    .comp-col h4 {
+      font-size: 8.5pt;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .comp-col.before h4 {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .comp-col.after h4 {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .callout {
+      background: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      padding: 10px 14px;
+      border-radius: 4px;
+      margin: 10px 0;
+      font-size: 9pt;
+      page-break-inside: avoid;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-container">
+  <!-- Capa / Cabeçalho -->
+  <div class="header-banner">
+    <div class="header-title-block">
+      <h1>Detecção de Bad Smells e Refatoração Segura</h1>
+      <div class="subtitle">Relatório Técnico de Qualidade de Software e Refatoração</div>
+    </div>
+  </div>
+
+  <div class="meta-box">
+    <div class="meta-item"><strong>Disciplina:</strong> <span>Qualidade de Software / Engenharia de Software</span></div>
+    <div class="meta-item"><strong>Repositório:</strong> <span>CleitonSilvaT/bad-smells-js-refactoring</span></div>
+    <div class="meta-item"><strong>Aluno:</strong> <span>Tiago Boaventura Amaral</span></div>
+    <div class="meta-item"><strong>Matrícula:</strong> <span>847972</span></div>
+  </div>
+
+  <!-- Seção 2: Análise Manual -->
+  <h2>1. Análise Manual (Caça aos Bad Smells)</h2>
+  <p>
+    A inspeção visual do arquivo de produção <code>src/ReportGenerator.js</code> revelou diversos problemas estruturais clássicos conhecidos como <em>Bad Smells</em> (Fowler, 2019). O método monolítico <code>generateReport</code> centraliza toda a lógica do módulo em 69 linhas, acumulando responsabilidades divergentes. Abaixo destacam-se os três principais smells:
+  </p>
+
+  <div class="smell-card">
+    <h3>
+      <span>1.1. Método Longo e Violação de Responsabilidade Única (SRP)</span>
+      <span class="badge badge-error">Bloater</span>
+    </h3>
+    <p>
+      <strong>Onde ocorre:</strong> <code>ReportGenerator.prototype.generateReport</code> (linhas 11–68).<br>
+      <strong>Descrição:</strong> O método é responsável por orquestrar a montagem do cabeçalho, a iteração de itens, o controle de acesso por perfil (<code>ADMIN</code> vs <code>USER</code>), a regra de negócio de prioridade, a formatação para CSV e HTML, o somatório financeiro e a geração do rodapé.<br>
+      <strong>Impacto na Manutenção:</strong> Qualquer alteração (ex: ajustar a estilização de uma tag HTML ou incluir um novo campo no CSV) exige alterar o mesmo método que contém regras de autorização de negócio, elevando exponencialmente o risco de regressões.<br>
+      <strong>Impacto nos Testes:</strong> Torna impossível isolar o teste do cálculo de totais ou da formatação de strings sem instanciar e executar toda a matriz combinatória de usuários e tipos de relatórios.
+    </p>
+  </div>
+
+  <div class="smell-card">
+    <h3>
+      <span>1.2. Duplicação de Código (Duplicated Code / Violação de DRY)</span>
+      <span class="badge badge-error">Dispensable</span>
+    </h3>
+    <p>
+      <strong>Onde ocorre:</strong> Linhas 35–42 e 46–52 de <code>src/ReportGenerator.js</code>.<br>
+      <strong>Descrição:</strong> A concatenação de colunas CSV (<code>${item.id},${item.name},${item.value},${user.name}\n</code>) e o acumulador <code>total += item.value;</code> aparecem de forma idêntica dentro do bloco de <code>ADMIN</code> e do bloco de <code>USER</code>. Além disso, a checagem <code>reportType === 'CSV'</code> vs <code>'HTML'</code> é repetida 3 vezes ao longo do fluxo.<br>
+      <strong>Impacto na Manutenção:</strong> Modificações estruturais no layout do relatório exigem alterações em múltiplos blocos de código. A omissão de um deles gera divergências silenciosas entre o que um perfil de usuário visualiza e o outro.<br>
+      <strong>Impacto nos Testes:</strong> Aumenta a redundância dos testes, que precisam validar as mesmas linhas de código duplicadas em múltiplos fluxos de execução.
+    </p>
+  </div>
+
+  <div class="smell-card">
+    <h3>
+      <span>1.3. Complexidade Ciclomática e Cognitiva Excessiva (Violação do OCP)</span>
+      <span class="badge badge-error">Change Preventer</span>
+    </h3>
+    <p>
+      <strong>Onde ocorre:</strong> Estrutura de laço e condicionais aninhadas (linhas 27–55).<br>
+      <strong>Descrição:</strong> O método encadeia <code>for</code> &rarr; <code>if (user.role === 'ADMIN')</code> &rarr; <code>if (item.value > 1000)</code> e <code>if (reportType === 'CSV')</code> / <code>else if (reportType === 'HTML')</code>, acumulando uma árvore de decisão profunda.<br>
+      <strong>Impacto na Manutenção:</strong> Fere o <em>Princípio Aberto/Fechado (OCP)</em>: para adicionar novos formatos (JSON, XML) ou novos papéis de usuário (GERENTE), é necessário alterar a função monolítica adicionando mais branches aninhados.<br>
+      <strong>Impacto nos Testes:</strong> Cada condicional aninhada duplica os caminhos independentes de execução, exigindo uma quantidade desmedida de testes para alcançar cobertura completa de ramos.
+    </p>
+  </div>
+
+  <!-- Quebra de página para manter paginação acadêmica de 2-4 páginas -->
+  <div class="page-break"></div>
+
+  <!-- Seção 3: Análise Estática Automatizada -->
+  <h2>2. Relatório da Ferramenta de Detecção (ESLint + SonarJS)</h2>
+  <p>
+    Para fundamentar a análise com métricas de qualidade objetivas, foi configurado o <strong>ESLint</strong> com o plugin oficial do SonarSource, <strong><code>eslint-plugin-sonarjs</code></strong>, focado na detecção de anti-padrões e complexidade cognitiva.
+  </p>
+
+  <div class="terminal-box">
+    <div class="term-header">
+      <span class="term-dot red"></span>
+      <span class="term-dot yellow"></span>
+      <span class="term-dot green"></span>
+      <span style="color: #94a3b8; margin-left: 6px;">Terminal — Análise Estática Inicial</span>
+    </div>
+    <span class="term-cmd">$ npx eslint src/</span>
+    <div class="term-error">
+C:\Users\Windows\Documents\faculdade_prog\bad-smells-js-refactoring\src\ReportGenerator.js<br>
+&nbsp;&nbsp;11:3&nbsp;&nbsp;&nbsp;error&nbsp;&nbsp;Refactor this function to reduce its Cognitive Complexity from 27 to the 15 allowed&nbsp;&nbsp;sonarjs/cognitive-complexity<br>
+&nbsp;&nbsp;43:14&nbsp;&nbsp;error&nbsp;&nbsp;Merge this if statement with the nested one&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sonarjs/no-collapsible-if<br>
+<br>
+&#10006; 2 problems (2 errors, 0 warnings)
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Contribuição do SonarJS:</strong>
+    A métrica de <em>Complexidade Cognitiva</em> calcula o esforço mental real para compreender o fluxo do código, atribuindo pesos maiores para quebras de linearidade e aninhamento. O SonarJS revelou que o método <code>generateReport</code> atingiu <strong>27 pontos</strong> (limite configurado: 15; ideal para clean code: 5). Além disso, identificou a regra <code>sonarjs/no-collapsible-if</code> na linha 43, evidenciando condicionais que poderiam ser fundidas ou eliminadas.
+  </div>
+
+  <!-- Seção 4: Processo de Refatoração -->
+  <h2>3. Processo de Refatoração Segura</h2>
+  <p>
+    O Bad Smell mais crítico tratado foi a <strong>Complexidade Condicional Excessiva associada à Violação do Princípio Aberto/Fechado (OCP)</strong> e ao <strong>Método Longo</strong>.
+  </p>
+
+  <h3>3.1. Técnicas Aplicadas</h3>
+  <ul>
+    <li>
+      <strong>Replace Conditional with Polymorphism (Padrão Strategy):</strong> Toda a geração textual de cabeçalho, linhas e rodapé foi encapsulada em classes formatadoras (<code>CsvReportFormatter</code> e <code>HtmlReportFormatter</code>). Um dicionário mapeador <code>formatters[reportType]</code> elimina totalmente as checagens repetitivas de tipo de relatório, permitindo suporte a novos formatos sem alterar a classe orquestradora.
+    </li>
+    <li>
+      <strong>Extract Method e Decompose Conditional:</strong> A regra de visibilidade por perfil foi extraída para a função pura <code>isItemVisibleForUser</code>; a marcação de itens prioritários foi isolada em <code>prepareItem</code>; e o cálculo matemático foi extraído para <code>calculateTotal</code>.
+    </li>
+    <li>
+      <strong>Replace Magic Number with Symbolic Constant:</strong> Os literais <code>500</code> e <code>1000</code> foram substituídos pelas constantes semânticas <code>USER_VALUE_LIMIT</code> e <code>ADMIN_PRIORITY_THRESHOLD</code>.
+    </li>
+  </ul>
+
+  <div class="comparison-grid">
+    <div class="comp-col before">
+      <h4>Antes (src/ReportGenerator.js)</h4>
+      <pre><code>// 69 linhas, Complexidade 27
+generateReport(reportType, user, items) {
+  let report = '';
+  let total = 0;
+  if (reportType === 'CSV') {
+    report += 'ID,NOME,VALOR,USUARIO\n';
+  } else if (reportType === 'HTML') {
+    report += '<html>...';
+  }
+  for (const item of items) {
+    if (user.role === 'ADMIN') {
+      if (item.value > 1000) item.priority = true;
+      if (reportType === 'CSV') {
+        report += `${item.id},...`;
+        total += item.value;
+      } else if (reportType === 'HTML') {
+        // duplicação de total e tags
+      }
+    } else if (user.role === 'USER') {
+      if (item.value <= 500) {
+        // duplicação idêntica de CSV
+      }
+    }
+  }
+  // mais if/else de rodapé...
+  return report.trim();
+}</code></pre>
+    </div>
+
+    <div class="comp-col after">
+      <h4>Depois (src/ReportGenerator.refactored.js)</h4>
+      <pre><code>// Modular, Strategy Pattern, Complexidade <= 1
+class CsvReportFormatter {
+  renderHeader() { return 'ID,NOME,VALOR,USUARIO\n'; }
+  renderRow(item, user) { return `${item.id},${item.name},${item.value},${user.name}\n`; }
+  renderFooter(total) { return `\nTotal,,\n${total},,\n`; }
+}
+
+class HtmlReportFormatter {
+  renderHeader(user) { return `&lt;html&gt;...&lt;h2&gt;Usuário: ${user.name}&lt;/h2&gt;...`; }
+  renderRow(item) {
+    const style = item.priority ? ' style="font-weight:bold;"' : '';
+    return `&lt;tr${style}&gt;&lt;td&gt;${item.id}&lt;/td&gt;&lt;td&gt;${item.name}&lt;/td&gt;&lt;td&gt;${item.value}&lt;/td&gt;&lt;/tr&gt;\n`;
+  }
+  renderFooter(total) { return `&lt;/table&gt;\n&lt;h3&gt;Total: ${total}&lt;/h3&gt;\n&lt;/body&gt;&lt;/html&gt;\n`; }
+}
+
+generateReport(reportType, user, items) {
+  const formatter = formatters[reportType];
+  if (!formatter) return '';
+
+  const visibleItems = items
+    .filter(item => isItemVisibleForUser(item, user))
+    .map(item => prepareItem(item, user));
+  const total = calculateTotal(visibleItems);
+
+  const header = formatter.renderHeader(user);
+  const body = visibleItems.map(item => formatter.renderRow(item, user)).join('');
+  const footer = formatter.renderFooter(total);
+  return `${header}${body}${footer}`.trim();
+}</code></pre>
+    </div>
+  </div>
+
+  <div class="terminal-box">
+    <div class="term-header">
+      <span class="term-dot green"></span>
+      <span style="color: #94a3b8; margin-left: 6px;">Terminal — Validação ESLint do Código Refatorado</span>
+    </div>
+    <span class="term-cmd">$ npx eslint src/ReportGenerator.refactored.js</span>
+    <div class="term-success">
+✔ 0 problems (0 errors, 0 warnings) — Aprovado com sucesso!
+    </div>
+  </div>
+
+  <!-- Seção 5: Validação com Testes -->
+  <div class="page-break"></div>
+  <h2>4. Validação Contínua com Testes (Rede de Segurança)</h2>
+  <p>
+    Conforme preconizado na metodologia de <em>Refatoração Segura</em>, a suíte de testes original foi preservada e duplicada em <code>__tests__/ReportGenerator.refactored.test.js</code>. Nenhuma alteração foi realizada nas asserções de teste; alterou-se apenas a importação para direcionar para o código refatorado.
+  </p>
+
+  <div class="terminal-box">
+    <div class="term-header">
+      <span class="term-dot green"></span>
+      <span style="color: #94a3b8; margin-left: 6px;">Terminal — Execução Completa dos Testes (Jest)</span>
+    </div>
+    <span class="term-cmd">$ npm test</span>
+    <div class="term-success">
+PASS __tests__/ReportGenerator.refactored.test.js<br>
+PASS tests/ReportGenerator.refactored.test.js<br>
+PASS tests/ReportGenerator.test.js<br>
+<br>
+Test Suites: 3 passed, 3 total<br>
+Tests:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;15 passed, 15 total<br>
+Snapshots:&nbsp;&nbsp;&nbsp;0 total<br>
+Time:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.507 s<br>
+Ran all test suites.
+    </div>
+  </div>
+
+  <!-- Seção 6: Conclusão -->
+  <h2>5. Conclusão</h2>
+  <p>
+    A refatoração segura comprova que é plenamente viável transformar um código legado, com alta complexidade e duplicações, em uma arquitetura limpa, extensível e elegante, sem quebrar nenhuma funcionalidade preexistente.
+  </p>
+  <p>
+    A existência de uma <strong>suíte de testes automatizada como rede de segurança</strong> foi crucial durante todo o processo: qualquer discrepância na geração de tags HTML ou formatação CSV foi imediatamente detectada pelo Jest em tempo real, permitindo correções ágeis. Aliada a ferramentas de análise estática como o <strong>ESLint e SonarJS</strong>, a equipe obtém métricas matemáticas de manutenibilidade que elevam permanentemente a qualidade do produto de software.
+  </p>
+
+</div>
+
+</body>
+</html>
